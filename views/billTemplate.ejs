@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header img {
+            width: 100px;
+        }
+        .details {
+            margin-bottom: 20px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .table, .table th, .table td {
+            border: 1px solid black;
+        }
+        .table th, .table td {
+            padding: 10px;
+            text-align: left;
+        }
+        .subtotal {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .terms {
+            margin-top: 20px;
+        }
+        .signature {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- <img src="https://ibb.co/Vw0nxbb" alt="VPharmacy Logo"> -->
+        <a href="https://imgbb.com/"><img src="https://i.ibb.co/kmVbJzz/vpharmacylogo.png" alt="vpharmacylogo"></a>
+        <h1>V Pharmacy Bill</h1>
+    </div>
+    <div class="details">
+        <p>INVOICE: <%= bill.invoiceNumber %></p>
+        <p>Patient Name: <%= bill.patientId %></p>
+        <p>Phone Number: <%= bill.phoneNumber %></p>
+        <p>Prescribed By: <%= bill.prescribedBy %></p>
+        <p>Village: <%= bill.village %></p>
+        <p>Address: <%= bill.address %></p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <!-- <th>Medicine</th>
+                <th>MRP</th>
+                <th>Discount</th>
+                <th>SGST</th>
+                <th>CGST</th>
+                <th>Quantity</th> -->
+                <th>Medicine</th>
+                <th>Quantity</th>
+                <th>Expiry</th>
+                <th>Batch Number</th>
+                <th>MRP / Medicine </th>
+                <th>Amount</th>
+               
+            </tr>
+        </thead>
+        
+        <tbody>
+            <% newAmount.forEach(item => { %>
+            <tr>
+                <td><%= item.medicineName %></td>
+                <td><%= item.quantity %></td>
+                <td><%= new Date(item.expiryDate).toLocaleDateString() %></td>
+                <td><%= item.BatchNumber %></td>
+                <td><%= item.mrpPerMedicine %></td>
+                <td><%= item.amount %></td>
+            </tr>
+            <% }); %>
+        </tbody>
+        
+    </table>
+    <div class="subtotal">
+        <!-- <% bill.medicines.forEach(item => { %>
+        
+        <% }); %> -->
+        <p>Total Amount: INR <%= totalAmount.toFixed(2) %></p>
+        <p>Discount (%): <%= discount.toFixed(2)%></p>
+        <!-- <p>GST(SGST+CGST) % : <%= GST %></p> -->
+        <p>Subtotal: INR <%= subTotal.toFixed(2)%></p>
+    </div>
+    <!-- <div class="terms">
+        <p>Terms and Conditions: <%= bill.termsAndCondition %></p>
+    </div> -->
+    <div class="terms">
+        <h3>Terms and Conditions</h3>
+        <ul>
+            <li>Medicines once purchased /ordered can't be returned.</li>
+            <li>Prescription is Mandatory for ordering or purchasing medicines.</li>
+            <!-- <li>We reserve the right to modify prices without prior notice.</li> -->
+        </ul>
+    </div>
+    <div class="signature">
+        <p>Signature: Bishnu Pandey</p>
+    </div>
+    <div class="signature">
+        <p>Remark: <%=bill.remark%></p>
+    </div>
+</body>
+</html>
