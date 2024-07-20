@@ -1300,17 +1300,26 @@ exports.generateBill = async (req, res) => {
         const logoUrl = '/logo/vpharmacylogo.png';
         const html = await ejs.renderFile(templatePath, { bill, logoUrl, newAmount, totalAmount, discount, subTotal, GST });
 
-        if (!fs.existsSync('./public/nocPdf')) {
-            fs.mkdirSync('./public/nocPdf');
-        }
-
-        const pdfFolderPath = './public/nocPdf';
+        const pdfFolderPath = path.join(__dirname, '../public/nocPdf/VP/24');
         const pdfFileName = `${invoiceNumber}_Noc.pdf`;
         const pdfFilePath = path.join(pdfFolderPath, pdfFileName);
 
+        // if (!fs.existsSync('./public/nocPdf')) {
+        //     fs.mkdirSync('./public/nocPdf');
+        // }
+        if (!fs.existsSync(pdfFolderPath)) {
+            fs.mkdirSync(pdfFolderPath, { recursive: true });
+        }
         if (fs.existsSync(pdfFilePath)) {
             fs.unlinkSync(pdfFilePath);
         }
+
+
+
+
+        // if (fs.existsSync(pdfFilePath)) {
+        //     fs.unlinkSync(pdfFilePath);
+        // }
         // {
 
         // const browser = await puppeteer.launch({
