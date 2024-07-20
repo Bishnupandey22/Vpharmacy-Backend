@@ -5,10 +5,12 @@ const connectDb = require("./config/DbConnection")
 require("dotenv").config()
 const DATABASE_URL = process.env.DATABASE_URL
 const Roles = require("./model/role/role")
+const Counter = require("./model/counterSchema/CounterSchema")
 const port = process.env.PORT
 connectDb(DATABASE_URL)
 const path = require('path');
 const superAdminRoutes = require("./routes/superAdmin")
+const notificationRoute = require("./routes/Notification")
 const passport = require('passport');
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
@@ -29,6 +31,10 @@ app.use(express.static('public'))
 // routes
 
 app.use("/api/superAdmin", superAdminRoutes.router)
+app.use("/api/notification", notificationRoute.router)
+
+
+
 const roles = [
     { id: 1, name: "super admin" },
     { id: 2, name: "admin" },
@@ -36,6 +42,7 @@ const roles = [
     { id: 4, name: "health expert" },
     { id: 5, name: "delevery boy" },
 ]
+
 
 
 // netlify configuration
@@ -46,6 +53,7 @@ const roles = [
 //         body: JSON.stringify({ message: "Hello, Netlify!" })
 //     };
 // };
+
 
 // inserting Role
 
@@ -61,6 +69,24 @@ Roles.countDocuments({})
         console.log(err, "error")
     })
     .finally(() => { })
+
+
+// inserting counter value default 100
+
+Counter.countDocuments({})
+    .exec()
+    .then(count => {
+        if (count === 0) {
+            const newCounter = new Counter({ name: "counter", sequence_value: 100 })
+            return newCounter.save()
+        }
+    })
+    .then(() => {
+        console.log("Counter initialized with default value 100.")
+    })
+    .catch(err => {
+        console.error("Error initializing counter:", err);
+    });
 
 const server = app.listen(port, () => {
     console.log("App Started Sucessfully")

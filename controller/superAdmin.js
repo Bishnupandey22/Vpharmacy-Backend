@@ -15,28 +15,45 @@ const { mailSender } = require("../common/emailSend");
 // generate invoice number
 
 
-const getNextSequenceValue = async (sequenceName) => {
+// const getNextSequenceValue = async (sequenceName) => {
+//     const counter = await Counter.findOneAndUpdate(
+//         { name: sequenceName },
+//         { $inc: { sequence_value: 1 } },
+//         { new: true, upsert: true }
+//     );
+//     // if (!counter.sequence_value) {
+//     //     counter.sequence_value = 100;
+//     //     await counter.save();
+//     // }
+//     console.log(counter, "counter")
+//     if (!counter || !counter.sequence_value) {
+//         // Create a new counter with default value if not found
+//         const newCounter = new Counter({ name: sequenceName });
+//         await newCounter.save();
+//         return newCounter.sequence_value; // Return the default value (100)
+//     }
+
+//     return counter.sequence_value;
+
+//     return counter.sequence_value;
+// };
+async function initializeCounter(sequenceName) {
+    const count = await Counter.countDocuments({ name: sequenceName });
+    if (count === 0) {
+        const newCounter = new Counter({ name: sequenceName, sequence_value: 100 });
+        await newCounter.save();
+    }
+}
+
+async function getNextSequenceValue(sequenceName) {
+    // await initializeCounter(sequenceName); // Ensure the counter is initialized
     const counter = await Counter.findOneAndUpdate(
         { name: sequenceName },
         { $inc: { sequence_value: 1 } },
-        { new: true, upsert: true }
+        { new: true }
     );
-    // if (!counter.sequence_value) {
-    //     counter.sequence_value = 100;
-    //     await counter.save();
-    // }
-    console.log(counter, "counter")
-    if (!counter || !counter.sequence_value) {
-        // Create a new counter with default value if not found
-        const newCounter = new Counter({ name: sequenceName });
-        await newCounter.save();
-        return newCounter.sequence_value; // Return the default value (100)
-    }
-
     return counter.sequence_value;
-
-    return counter.sequence_value;
-};
+}
 // create super Admin
 exports.createSuperAdmin = async (req, res) => {
     console.log("hiting")
@@ -690,7 +707,7 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceNumber } = req.body
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType } = req.body
 
         // check if patient exists
         // const isPatientExists = await userModel.findById(patientId)
@@ -728,7 +745,8 @@ exports.createAndUpdateBiling = async (req, res) => {
             // await medicine.save();
         }
 
-
+        const year = new Date().getFullYear().toString().slice(-2);
+        const invoiceNumber = `VP/${year}/${await getNextSequenceValue('counter')}`;
         if (id) {
             const isBillExists = await Billing.findById(id)
             if (!isBillExists) {
@@ -747,7 +765,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                         prescribedBy: prescribedBy,
                         village: village,
                         invoiceNumber: invoiceNumber,
-                        remark: remark
+                        remark: remark,
+                        invoiceType: invoiceType
                     },
                 }, { new: true }
             )
@@ -765,8 +784,7 @@ exports.createAndUpdateBiling = async (req, res) => {
 
 
             // const generateInvoiceId = `Vp/24/100${Date.now()}`
-            const year = new Date().getFullYear().toString().slice(-2);
-            // const invoiceNumber = `VP/${year}/${await getNextSequenceValue('invoice')}`;
+
             const createBilling = await Billing.create({
                 patientId: patientId,
                 medicines: medicines,
@@ -775,7 +793,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                 phoneNumber: phoneNumber,
                 prescribedBy: prescribedBy,
                 village: village,
-                remark: remark
+                remark: remark,
+                invoiceType: invoiceType
             })
 
             // const newBilling = new Billing({
