@@ -1349,7 +1349,7 @@ exports.generateBill = async (req, res) => {
         // await page.pdf({ format: "A4" })
         console.log("recieveed2")
         const pfd = await page.pdf({
-            path: pdfFilePath,
+            // path: pdfFilePath,
             format: 'A4',
             margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
             printBackground: true
