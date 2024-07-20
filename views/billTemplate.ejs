@@ -38,6 +38,8 @@
             margin-top: 20px;
         }
         .signature {
+            display: flex;
+            justify-content: space-between;
             margin-top: 40px;
         }
     </style>
@@ -110,10 +112,10 @@
         </ul>
     </div>
     <div class="signature">
-        <p>Signature: Bishnu Pandey</p>
+        <p>Remark: <%=bill.remark%></p>
+        <p>Signature: ______________________</p>
     </div>
     <div class="signature">
-        <p>Remark: <%=bill.remark%></p>
     </div>
 </body>
 </html>

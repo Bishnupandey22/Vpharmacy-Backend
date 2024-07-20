@@ -40,12 +40,12 @@ const roles = [
 
 // netlify configuration
 // functions/hello.js
-exports.handler = async (event, context) => {
-    return {
-        statusCode: 200,
-        body: JSON.stringify({ message: "Hello, Netlify!" })
-    };
-};
+// exports.handler = async (event, context) => {
+//     return {
+//         statusCode: 200,
+//         body: JSON.stringify({ message: "Hello, Netlify!" })
+//     };
+// };
 
 // inserting Role
 
@@ -62,7 +62,26 @@ Roles.countDocuments({})
     })
     .finally(() => { })
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log("App Started Sucessfully")
 })
 
+// Socket
+
+// const io=require("socket.io")(server,{
+//     pingTimeout:60000,
+//     cors:{
+//         origin:'*'
+//     }
+// })
+
+// io.on("connection",(socket)=>{
+//     console.log("new Client Connected");
+//       // Listen for join room event
+//     socket.on("joinRoom",(userId)=>{
+//         console.log(`User id${userId}`)
+//         socket.join(userId)
+//     })
+//     // listen for send message event
+//     socket.on("sendNotification",async())
+// })
