@@ -1358,16 +1358,16 @@ exports.generateBill = async (req, res) => {
 
         await browser.close();
 
-        const pdfStream = fs.createReadStream(pdfFilePath);
+        // const pdfStream = fs.createReadStream(pdfFilePath);
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename=bill_${invoiceNumber}.pdf`,
         });
-        pdfStream.pipe(res);
+        // pdfStream.pipe(res);
 
-        pdfStream.on('end', () => {
-            fs.unlinkSync(pdfFilePath); // Delete the PDF file after sending the response
-        });
+        // pdfStream.on('end', () => {
+        //     fs.unlinkSync(pdfFilePath); // Delete the PDF file after sending the response
+        // });
 
     } catch (error) {
         console.error(error);
