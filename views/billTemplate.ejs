@@ -52,6 +52,7 @@
     </div>
     <div class="details">
         <p>INVOICE: <%= bill.invoiceNumber %></p>
+        <p>Date: <%= new Date(bill.date)?.toISOString()?.split("T")?.[0]  %></p>
         <p>Patient Name: <%= bill.patientId %></p>
         <p>Phone Number: <%= bill.phoneNumber %></p>
         <p>Prescribed By: <%= bill.prescribedBy %></p>
@@ -99,6 +100,7 @@
         <p>Discount (%): <%= discount.toFixed(2)%></p>
         <!-- <p>GST(SGST+CGST) % : <%= GST %></p> -->
         <p>Subtotal: INR <%= subTotal.toFixed(2)%></p>
+        <p> Amount in Words:   <%= amountInWords%></p>
     </div>
     <!-- <div class="terms">
         <p>Terms and Conditions: <%= bill.termsAndCondition %></p>

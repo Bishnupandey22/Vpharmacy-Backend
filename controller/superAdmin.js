@@ -12,38 +12,9 @@ const ejs = require("ejs");
 const puppeteer = require("puppeteer");
 const Counter = require("../model/counterSchema/CounterSchema");
 const { mailSender } = require("../common/emailSend");
+const converter = require("number-to-words")
 // generate invoice number
 
-
-// const getNextSequenceValue = async (sequenceName) => {
-//     const counter = await Counter.findOneAndUpdate(
-//         { name: sequenceName },
-//         { $inc: { sequence_value: 1 } },
-//         { new: true, upsert: true }
-//     );
-//     // if (!counter.sequence_value) {
-//     //     counter.sequence_value = 100;
-//     //     await counter.save();
-//     // }
-//     console.log(counter, "counter")
-//     if (!counter || !counter.sequence_value) {
-//         // Create a new counter with default value if not found
-//         const newCounter = new Counter({ name: sequenceName });
-//         await newCounter.save();
-//         return newCounter.sequence_value; // Return the default value (100)
-//     }
-
-//     return counter.sequence_value;
-
-//     return counter.sequence_value;
-// };
-async function initializeCounter(sequenceName) {
-    const count = await Counter.countDocuments({ name: sequenceName });
-    if (count === 0) {
-        const newCounter = new Counter({ name: sequenceName, sequence_value: 100 });
-        await newCounter.save();
-    }
-}
 
 async function getNextSequenceValue(sequenceName) {
     // await initializeCounter(sequenceName); // Ensure the counter is initialized
@@ -53,6 +24,19 @@ async function getNextSequenceValue(sequenceName) {
         { new: true }
     );
     return counter.sequence_value;
+}
+function generateAmountInWords(amount) {
+    const [integerPart, decimalPart] = amount.toString().split('.')
+    let words = converter.toWords(parseInt(integerPart));
+
+    if (decimalPart) {
+        words += ' point ';
+        for (const digit of decimalPart) {
+            words += ` ${converter.toWords(parseInt(digit))} `
+        }
+    }
+
+    return words
 }
 // create super Admin
 exports.createSuperAdmin = async (req, res) => {
@@ -707,7 +691,7 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType } = req.body
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date } = req.body
 
         // check if patient exists
         // const isPatientExists = await userModel.findById(patientId)
@@ -766,7 +750,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                         village: village,
                         invoiceNumber: invoiceNumber,
                         remark: remark,
-                        invoiceType: invoiceType
+                        invoiceType: invoiceType,
+                        date: date
                     },
                 }, { new: true }
             )
@@ -794,7 +779,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                 prescribedBy: prescribedBy,
                 village: village,
                 remark: remark,
-                invoiceType: invoiceType
+                invoiceType: invoiceType,
+                date: date
             })
 
             // const newBilling = new Billing({
@@ -1314,10 +1300,11 @@ exports.generateBill = async (req, res) => {
                 amount: amount.toFixed(2)
             });
         });
-
+        let amountInWords = generateAmountInWords(subTotal)
+        console.log("amountInWords", amountInWords)
         const templatePath = path.join(__dirname, '../views/billTemplate.ejs');
         const logoUrl = '/logo/vpharmacylogo.png';
-        const html = await ejs.renderFile(templatePath, { bill, logoUrl, newAmount, totalAmount, discount, subTotal, GST });
+        const html = await ejs.renderFile(templatePath, { bill, logoUrl, newAmount, totalAmount, discount, subTotal, GST, amountInWords });
 
         const browser = await puppeteer.launch({
             headless: true,
@@ -1342,7 +1329,7 @@ exports.generateBill = async (req, res) => {
         res.send(pdf);
 
     } catch (error) {
-        console.error(error);
+        console.error(error)
         res.status(500).send("An error occurred");
     }
 };

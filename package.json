@@ -7,7 +7,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "nodemon app.js"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,7 @@
     "nodemailer": "^6.9.7",
     "nodemailer-express-handlebars": "^6.1.2",
     "nodemon": "^3.0.2",
+    "number-to-words": "^1.2.4",
     "passport": "^0.7.0",
     "puppeteer": "^22.13.1",
     "shortid": "^2.2.16",

@@ -12,6 +12,8 @@ const path = require('path');
 const superAdminRoutes = require("./routes/superAdmin")
 const notificationRoute = require("./routes/Notification")
 const passport = require('passport');
+const notificationModel = require("./model/notification/Notification")
+
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -109,5 +111,13 @@ const server = app.listen(port, () => {
 //         socket.join(userId)
 //     })
 //     // listen for send message event
-//     socket.on("sendNotification",async())
+//     socket.on("sendNotification",async({data})=>{
+//         try {
+//             const newNotification=await notificationModel.create({
+//                 data
+//             })
+//         } catch (error) {
+            
+//         }
+//     })
 // })

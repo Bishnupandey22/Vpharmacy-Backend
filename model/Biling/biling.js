@@ -19,6 +19,7 @@ const bilingmodel = new mongoose.Schema({
     remark: { type: String, default: null },
     address: { type: String, required: true },
     termsAndCondition: { type: String, default: null },
+    date: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now },
     deletedAt: { type: Date, default: null }
 }, { timestamps: true })
