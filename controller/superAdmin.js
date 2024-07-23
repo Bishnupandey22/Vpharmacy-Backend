@@ -13,8 +13,11 @@ const puppeteer = require("puppeteer");
 const Counter = require("../model/counterSchema/CounterSchema");
 const { mailSender } = require("../common/emailSend");
 const converter = require("number-to-words")
+const notificationModel = require("../model/notification/Notification")
+const { formatCustomDate } = require("../common/emailSend")
 // generate invoice number
-
+// const socketInstance = require("../app")
+const { io } = require("../utils/socket")
 
 async function getNextSequenceValue(sequenceName) {
     // await initializeCounter(sequenceName); // Ensure the counter is initialized
@@ -691,8 +694,8 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date } = req.body
-
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId } = req.body
+        const user = req.user
         // check if patient exists
         // const isPatientExists = await userModel.findById(patientId)
 
@@ -731,6 +734,36 @@ exports.createAndUpdateBiling = async (req, res) => {
 
         const year = new Date().getFullYear().toString().slice(-2);
         const invoiceNumber = `VP/${year}/${await getNextSequenceValue('counter')}`;
+
+        const deliveryBoyExists = await userModel.findById(deliveryBoyId)
+        if (!deliveryBoyExists) {
+            return res.status(404).send({
+                message: "Delivery Boy Not Found"
+            })
+        }
+
+
+        // notification Testing
+        const bodyString = `${user?.firstName} ${user?.lastName} has assigned a new bill for delivery on ${formatCustomDate(new Date())}. Please check the application for details.`;
+
+        const dataObject = {
+            header: "New Bill Assigned",
+            subHeader: "A new bill has been assigned to you.",
+            body: bodyString,
+            notificationType: 1,
+            userId: deliveryBoyId
+        }
+        const notification = await notificationModel.create({
+            ...dataObject,
+        })
+        if (!notification) {
+            return res.status(400).send({
+                message: "Getting Error While Creating Notification"
+            })
+        }
+
+
+
         if (id) {
             const isBillExists = await Billing.findById(id)
             if (!isBillExists) {
@@ -751,7 +784,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                         invoiceNumber: invoiceNumber,
                         remark: remark,
                         invoiceType: invoiceType,
-                        date: date
+                        date: date,
+                        deliveryBoyId: deliveryBoyId
                     },
                 }, { new: true }
             )
@@ -760,16 +794,13 @@ exports.createAndUpdateBiling = async (req, res) => {
                     message: "Getting Error While Updating bill",
                 })
             }
+            io.to(deliveryBoyId).emit("sendNotification", dataObject)
             return res.status(200).send({
                 message: "Sucessfully Update Biling",
                 biling: updateBiling
 
             })
         } else {
-
-
-            // const generateInvoiceId = `Vp/24/100${Date.now()}`
-
             const createBilling = await Billing.create({
                 patientId: patientId,
                 medicines: medicines,
@@ -780,7 +811,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                 village: village,
                 remark: remark,
                 invoiceType: invoiceType,
-                date: date
+                date: date,
+                deliveryBoyId: deliveryBoyId
             })
 
             // const newBilling = new Billing({
@@ -796,6 +828,15 @@ exports.createAndUpdateBiling = async (req, res) => {
                     message: "Getting Error While creating biling"
                 })
             }
+            console.log(io, "io")
+
+            io.to(deliveryBoyId).emit("sendNotification", dataObject, (error) => {
+                if (error) {
+                    console.error("Error sending notification:", error);
+                } else {
+                    console.log("Notification sent successfully:", dataObject);
+                }
+            })
             return res.status(200).send({
                 message: "Sucessfully Save Biling",
                 biling: createBilling

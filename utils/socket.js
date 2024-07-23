@@ -1,27 +1,27 @@
-const http=require("http")
-const express=require("express")
-const app=express()
-const {Server} =require("socket.io")
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const app = express();
+const server = http.createServer(app);
 
-const server=http.createServer(app)
-const io=new Server(server) //input output
+const port = process.env.PORT || 3000;
 
-// socket.io 
-io.on("connection",(socket)=>{
-    console.log("A New user create connection",socket.id)
-    socket.on("message",message=>{
-        io.emit("message",message)//if a event comes from frontend then send all of them
-        console.log(message)
-    })//name same for frontend and backned
-})//when we create a connection from frontend we need io.on and when connection is sucessfull then the call back function is run
+const io = socketIo(server, {
 
-// and for frontend 
-// socket.emit("message",(message)=>{
-//     console.log(message)
-// })
-// if a event name message then console it
+    pingTimeout: 60000,
+    cors: {
+        origin: '*'
+    }
+});
 
+const userSocketMap = new Map();
 
-server.listen(9000,()=>{
-    console.log("server running")
-})//port number
+io.on("connection", (socket) => {
+    console.log("New client connected");
+    socket.on("joinRoom", (userId) => {
+        console.log(`User id ${userId}`);
+        socket.join(userId);
+        userSocketMap.set(userId, socket.id);
+    });
+});
+exports.io = io 

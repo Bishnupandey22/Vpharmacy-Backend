@@ -1,13 +1,13 @@
 const express = require("express")
 const router = express.Router()
 const multer = require("multer")
+const { socketInstance } = require("../app")
 const superAdminController = require("../controller/superAdmin")
 const auth = require("../middleware/jwt")
 
 router.post("/createSuperAdmin", superAdminController.createSuperAdmin)
 router.post("/signIn", superAdminController.signIn)
 const { uploadProfile } = require("../utils/multer")
-
 
 // ######### --------- User Routes Starts Here ####### ---------
 

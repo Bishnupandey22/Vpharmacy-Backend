@@ -3,6 +3,7 @@ const objectId = mongoose.Schema.ObjectId
 const shortid = require("shortid");
 const bilingmodel = new mongoose.Schema({
     patientId: { type: String },
+    deliveryBoyId: { type: objectId },
     phoneNumber: { type: String },
     prescribedBy: { type: String },
     village: { type: String },

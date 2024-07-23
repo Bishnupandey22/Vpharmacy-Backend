@@ -1,10 +1,11 @@
 const notificationModel = require("../model/notification/Notification")
-
+const mongoose = require("mongoose")
 // Un Read Notification
 exports.unReadNotification = async (req, res) => {
     try {
         const { userId } = req.params
         const notification = await notificationModel.find({ userId: userId, isRead: false })
+
         if (!notification) {
             return res.status(404).send({
                 message: "No Notification Found"
