@@ -696,8 +696,15 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName } = req.body
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName, adminId } = req.body
         const user = req.user
+        const isAdmin = await userModel.findById(adminId)
+        if (!isAdmin) {
+            return res.status(404).send({
+                message: "Admin Not Found"
+            })
+        }
+        console.log(isAdmin, "user")
         // check if patient exists
         // const isPatientExists = await userModel.findById(patientId)
 
@@ -746,7 +753,7 @@ exports.createAndUpdateBiling = async (req, res) => {
 
 
         // notification Testing
-        const bodyString = `${user?.firstName} ${user?.lastName} has assigned a new bill for delivery on ${formatCustomDate(new Date())}. Please check the application for details.`;
+        const bodyString = `${isAdmin?.firstName} ${isAdmin?.lastName} has assigned a new bill for delivery on ${formatCustomDate(new Date())}. Please check the application for details.`;
 
         const dataObject = {
             header: "New Bill Assigned",
