@@ -19,6 +19,8 @@ const { formatCustomDate } = require("../common/emailSend")
 // const socketInstance = require("../app")
 const { io } = require("../utils/socket")
 
+
+console.log(io, "io")
 async function getNextSequenceValue(sequenceName) {
     // await initializeCounter(sequenceName); // Ensure the counter is initialized
     const counter = await Counter.findOneAndUpdate(
@@ -113,12 +115,12 @@ exports.signIn = async (req, res) => {
                     expiresIn = '7d'; // If remember me is checked, expiry will be 7 days
                 }
                 const token = jwt.sign({ email: req.body.email }, PRIVATEKEY, { expiresIn })
-
-                let expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1 day in milliseconds
+                // for testing period both of them is 30 day else is 1 day or 7 day
+                let expiryTime = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
                 if (rememberMe) {
 
-                    expiryTime = new Date().getTime() + 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+                    expiryTime = new Date().getTime() + 30 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
                 }
                 return res.status(200).send({
@@ -694,7 +696,7 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId } = req.body
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName } = req.body
         const user = req.user
         // check if patient exists
         // const isPatientExists = await userModel.findById(patientId)
@@ -785,7 +787,9 @@ exports.createAndUpdateBiling = async (req, res) => {
                         remark: remark,
                         invoiceType: invoiceType,
                         date: date,
-                        deliveryBoyId: deliveryBoyId
+                        deliveryBoyId: deliveryBoyId,
+                        villageName: villageName,
+                        invoiceNumberManual: invoiceNumberManual
                     },
                 }, { new: true }
             )
@@ -812,7 +816,9 @@ exports.createAndUpdateBiling = async (req, res) => {
                 remark: remark,
                 invoiceType: invoiceType,
                 date: date,
-                deliveryBoyId: deliveryBoyId
+                deliveryBoyId: deliveryBoyId,
+                villageName: villageName,
+                invoiceNumberManual: invoiceNumberManual
             })
 
             // const newBilling = new Billing({

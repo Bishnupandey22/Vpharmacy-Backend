@@ -51,24 +51,23 @@ exports.readNotification = async (req, res) => {
 exports.getAllNotification = async (req, res) => {
     try {
         const { userId } = req.params
-        const searchText = req.query.keyword ? req.keyword.keyword.trim() : ""
+        const searchText = req.query.keyword ? req.query.keyword.trim() : ""
         const page = req.query.page || 1
         const limit = req.query.perPage || 10
         const skip = (page - 1) * limit
-
         let whereCondition = {
             userId: userId
         }
         if (searchText) {
             whereCondition.$or = [
-                { header: { $regex: searchText, options: "i" } },
-                { subHeader: { $regex: searchText, options: "i" } }
+                { header: { $regex: searchText, $options: "i" } },
+                { subHeader: { $regex: searchText, $options: "i" } }
             ]
         }
         if (!searchText) {
             delete whereCondition.$or
         }
-        const [notification, count] = Promise.all([
+        const [notification, count] = await Promise.all([
             notificationModel.find(whereCondition).skip(skip).limit(limit).sort({ _id: "desc" }),
             notificationModel.countDocuments(whereCondition)
         ])

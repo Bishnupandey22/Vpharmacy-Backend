@@ -14,6 +14,8 @@ const notificationRoute = require("./routes/Notification")
 const passport = require('passport');
 const notificationModel = require("./model/notification/Notification")
 
+// const { io } = require("./utils/socket")
+
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -114,4 +116,7 @@ io.on("connection", (socket) => {
         socket.join(userId);
         userSocketMap.set(userId, socket.id);
     });
-});     
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
