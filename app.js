@@ -13,7 +13,11 @@ const superAdminRoutes = require("./routes/superAdmin")
 const notificationRoute = require("./routes/Notification")
 const passport = require('passport');
 const notificationModel = require("./model/notification/Notification")
-
+const pincodeAndVillageRoute = require("./routes/VillageAndPincode")
+const pincode = require("./model/pincode/pincode")
+const village = require("./model/village/village")
+const pincodeArray = require("./utils/pinCode")
+const villageArray = require("./utils/Village")
 // const { io } = require("./utils/socket")
 
 // Set EJS as the view engine
@@ -36,7 +40,7 @@ app.use(express.static('public'))
 
 app.use("/api/superAdmin", superAdminRoutes.router)
 app.use("/api/notification", notificationRoute.router)
-
+app.use("/api/pincodeAndVillage", pincodeAndVillageRoute.router)
 
 
 const roles = [
@@ -73,6 +77,38 @@ Roles.countDocuments({})
         console.log(err, "error")
     })
     .finally(() => { })
+
+pincode.countDocuments({})
+    .exec()
+    .then(count => {
+        if (count === 0) {
+            return pincode.insertMany(pincodeArray)
+        } else {
+            console.log('pincode already exist in the database.');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+    })
+    .finally(() => {
+    });
+
+
+village.countDocuments({})
+    .exec()
+    .then(count => {
+        if (count === 0) {
+            return village.insertMany(villageArray)
+        } else {
+            console.log('village already exist in the database.');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+    })
+    .finally(() => {
+    });
+
 
 
 // inserting counter value default 100

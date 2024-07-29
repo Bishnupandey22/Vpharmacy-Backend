@@ -96,10 +96,10 @@
         <!-- <% bill.medicines.forEach(item => { %>
         
         <% }); %> -->
-        <p>Total Amount: INR <%= totalAmount.toFixed(2) %></p>
+        <p>Total Amount(incl. GST): INR <%= totalAmount %></p>
         <p>Discount (%): <%= discount.toFixed(2)%></p>
         <!-- <p>GST(SGST+CGST) % : <%= GST %></p> -->
-        <p>Subtotal: INR <%= subTotal.toFixed(2)%></p>
+        <p>Subtotal: INR <%= subTotal%></p>
         <p> Amount in Words:   <%= amountInWords%></p>
     </div>
     <!-- <div class="terms">

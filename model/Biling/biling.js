@@ -8,6 +8,7 @@ const bilingmodel = new mongoose.Schema({
     prescribedBy: { type: String },
     village: { type: String },
     villageName: { type: String },
+    pincode: { type: String, },
     invoiceNumberManual: { type: String },
     isCancelled: { type: Boolean, default: false },
     medicines: [{

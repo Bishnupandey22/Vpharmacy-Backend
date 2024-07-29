@@ -20,7 +20,6 @@ const { formatCustomDate } = require("../common/emailSend")
 const { io } = require("../utils/socket")
 
 
-console.log(io, "io")
 async function getNextSequenceValue(sequenceName) {
     // await initializeCounter(sequenceName); // Ensure the counter is initialized
     const counter = await Counter.findOneAndUpdate(
@@ -31,18 +30,22 @@ async function getNextSequenceValue(sequenceName) {
     return counter.sequence_value;
 }
 function generateAmountInWords(amount) {
-    const [integerPart, decimalPart] = amount.toString().split('.')
-    let words = converter.toWords(parseInt(integerPart));
+    const [integerPart, decimalPart] = amount.toString().split('.');
+    let words = converter.toWords(parseInt(integerPart)) + ' rupees';
 
     if (decimalPart) {
-        words += ' point ';
+        words += ' and ';
         for (const digit of decimalPart) {
-            words += ` ${converter.toWords(parseInt(digit))} `
+            words += `${converter.toWords(parseInt(digit))} `;
         }
+        words += 'paise only';
+    } else {
+        words += ' only';
     }
 
-    return words
+    return words.charAt(0).toUpperCase() + words.slice(1);
 }
+
 // create super Admin
 exports.createSuperAdmin = async (req, res) => {
     console.log("hiting")
@@ -696,8 +699,9 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName, adminId } = req.body
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName, adminId, pincode } = req.body
         const user = req.user
+        console.log("pincode", pincode)
         const isAdmin = await userModel.findById(adminId)
         if (!isAdmin) {
             return res.status(404).send({
@@ -796,7 +800,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                         date: date,
                         deliveryBoyId: deliveryBoyId,
                         villageName: villageName,
-                        invoiceNumberManual: invoiceNumberManual
+                        invoiceNumberManual: invoiceNumberManual,
+                        pincode: pincode
                     },
                 }, { new: true }
             )
@@ -825,7 +830,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                 date: date,
                 deliveryBoyId: deliveryBoyId,
                 villageName: villageName,
-                invoiceNumberManual: invoiceNumberManual
+                invoiceNumberManual: invoiceNumberManual,
+                pincode: pincode
             })
 
             // const newBilling = new Billing({
@@ -1342,8 +1348,10 @@ exports.generateBill = async (req, res) => {
             let cgst = parseFloat(((costPerMedicine * item.medicineId.CGST) / 100).toFixed(2));
             let sgst = parseFloat(((costPerMedicine * item.medicineId.SGST) / 100).toFixed(2));
             GST = cgst + sgst;
-            let amount = parseFloat((costPerMedicine * item.quantity).toFixed(2));
-            subTotal += parseFloat(((costPerMedicine - discount) * item.quantity).toFixed(2));
+            // let amount = parseFloat((costPerMedicine * item.quantity).toFixed(2));
+            let amount = Number(costPerMedicine * item.quantity)
+            // subTotal += parseFloat(((costPerMedicine - discount) * item.quantity).toFixed(2));
+            subTotal += Number((costPerMedicine - discount) * item.quantity)
             totalAmount += amount;
             newAmount.push({
                 medicineName: item.medicineId.medicineName,
