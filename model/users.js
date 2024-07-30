@@ -13,9 +13,9 @@ const userSchema = new mongoose.Schema({
     phone: { type: String, default: null },
     city: { type: String, default: null },
     village: { type: String, default: null },
-    state: { type: String, default: null },
+    state: { type: String, default: "up" },
     country: { type: String, default: "India" },
-    zipCode: { type: String, default: null },
+    pincode: { type: String, default: null },
     address: { type: String, default: null },
     isActive: { type: Boolean, default: true },
 

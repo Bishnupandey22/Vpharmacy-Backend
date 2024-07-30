@@ -155,7 +155,7 @@ exports.signIn = async (req, res) => {
 // Creaet And Update User
 exports.createAndUpdateUser = async (req, res) => {
     try {
-        const { id, firstName, middleName, lastName, gender, dateOfBirth, email, password, phone, city, village, state, country, zipCode, address, designation, roleId } = req.body
+        const { id, firstName, middleName, lastName, gender, dateOfBirth, email, password, phone, city, village, state, country, pincode, address, designation, roleId } = req.body
 
         // updating user
         if (id) {
@@ -177,9 +177,10 @@ exports.createAndUpdateUser = async (req, res) => {
                 state: state,
                 country: country,
                 village: village,
-                zipCode: zipCode,
+                pincode: pincode,
                 address: address,
-                designation: designation
+                designation: designation,
+                phone: phone
             }
 
 
@@ -273,7 +274,7 @@ exports.createAndUpdateUser = async (req, res) => {
                 state: state,
                 country: country,
                 village: village,
-                zipCode: zipCode,
+                pincode: pincode,
                 address: address,
                 designation: designation,
                 roleId: roleId
