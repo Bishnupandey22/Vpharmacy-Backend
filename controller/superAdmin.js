@@ -1350,9 +1350,9 @@ exports.generateBill = async (req, res) => {
             let sgst = parseFloat(((costPerMedicine * item.medicineId.SGST) / 100).toFixed(2));
             GST = cgst + sgst;
             // let amount = parseFloat((costPerMedicine * item.quantity).toFixed(2));
-            let amount = Number(costPerMedicine * item.quantity)
+            let amount = Math.round(Number(costPerMedicine * item.quantity))
             // subTotal += parseFloat(((costPerMedicine - discount) * item.quantity).toFixed(2));
-            subTotal += Number((costPerMedicine - discount) * item.quantity)
+            subTotal += Math.round(Number((costPerMedicine - discount) * item.quantity))
             totalAmount += amount;
             newAmount.push({
                 medicineName: item.medicineId.medicineName,

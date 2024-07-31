@@ -117,7 +117,7 @@ Counter.countDocuments({})
     .exec()
     .then(count => {
         if (count === 0) {
-            const newCounter = new Counter({ name: "counter", sequence_value: 100 })
+            const newCounter = new Counter({ name: "counter", sequence_value: 99 })
             return newCounter.save()
         }
     })
