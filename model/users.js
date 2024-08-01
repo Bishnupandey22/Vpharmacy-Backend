@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema({
     // 4:Health Expert
     // 5:Delevery Boy
     // 6:Normal User
+
+    // for doctor
+    consultantFee: { type: Number },
+    degree: { type: String },
+    specilization: { type: String },
+
     verificationOtp: { type: String },
     otpGeneratedAt: { type: Date },
     OTP: { type: String },

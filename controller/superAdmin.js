@@ -155,7 +155,7 @@ exports.signIn = async (req, res) => {
 // Creaet And Update User
 exports.createAndUpdateUser = async (req, res) => {
     try {
-        const { id, firstName, middleName, lastName, gender, dateOfBirth, email, password, phone, city, village, state, country, pincode, address, designation, roleId } = req.body
+        const { id, firstName, middleName, lastName, gender, dateOfBirth, email, password, phone, city, village, state, country, pincode, address, designation, roleId, consultantFee, degree, specilization } = req.body
 
         // updating user
         if (id) {
@@ -180,7 +180,10 @@ exports.createAndUpdateUser = async (req, res) => {
                 pincode: pincode,
                 address: address,
                 designation: designation,
-                phone: phone
+                phone: phone,
+                consultantFee: consultantFee,
+                degree: degree,
+                specilization: specilization
             }
 
 
@@ -277,7 +280,10 @@ exports.createAndUpdateUser = async (req, res) => {
                 pincode: pincode,
                 address: address,
                 designation: designation,
-                roleId: roleId
+                roleId: roleId,
+                consultantFee: consultantFee,
+                degree: degree,
+                specilization: specilization
             }
 
             if (req.file && req.file.filename) {
