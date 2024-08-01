@@ -706,16 +706,14 @@ exports.deleteInventory = async (req, res) => {
 
 exports.createAndUpdateBiling = async (req, res) => {
     try {
-        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName, adminId, pincode } = req.body
+        const { patientId, medicines, address, id, phoneNumber, prescribedBy, village, remark, invoiceType, date, deliveryBoyId, invoiceNumberManual, villageName, adminId, pincode, deliveryCharge } = req.body
         const user = req.user
-        console.log("pincode", pincode)
         const isAdmin = await userModel.findById(adminId)
         if (!isAdmin) {
             return res.status(404).send({
                 message: "Admin Not Found"
             })
         }
-        console.log(isAdmin, "user")
         // check if patient exists
         // const isPatientExists = await userModel.findById(patientId)
 
@@ -734,6 +732,14 @@ exports.createAndUpdateBiling = async (req, res) => {
                     message: "Medicine not found"
                 })
             }
+            // const quantityReduction = Math.max(0, med.quantity - medicine.totalMedicineInStoke);
+            // if (quantityReduction === 0) {
+            //     console.log(`Medicine with ID ${med.medicineId} already has sufficient quantity. No update needed.`);
+            //     continue; // Skip to the next iteration if no reduction is required
+            // }
+            // const medicineStoke = medicine.totalMedicineInStoke - quantityReduction;
+            // console.log("medicineStoke", medicineStoke);
+
             let medicineStoke = medicine.totalMedicineInStoke - med.quantity
             console.log("medicineStoke", medicineStoke)
 
@@ -808,7 +814,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                         deliveryBoyId: deliveryBoyId,
                         villageName: villageName,
                         invoiceNumberManual: invoiceNumberManual,
-                        pincode: pincode
+                        pincode: pincode,
+                        deliveryCharge: deliveryCharge
                     },
                 }, { new: true }
             )
@@ -838,7 +845,8 @@ exports.createAndUpdateBiling = async (req, res) => {
                 deliveryBoyId: deliveryBoyId,
                 villageName: villageName,
                 invoiceNumberManual: invoiceNumberManual,
-                pincode: pincode
+                pincode: pincode,
+                deliveryCharge: deliveryCharge
             })
 
             // const newBilling = new Billing({
@@ -1348,9 +1356,10 @@ exports.generateBill = async (req, res) => {
         let discount = 0;
         let subTotal = 0;
         let GST = 0;
-
         bill.medicines.forEach(item => {
+
             let costPerMedicine = item.medicineId.mrpPerMedicine;
+
             discount = parseFloat(((costPerMedicine * item.medicineId.discount) / 100).toFixed(2));
             let cgst = parseFloat(((costPerMedicine * item.medicineId.CGST) / 100).toFixed(2));
             let sgst = parseFloat(((costPerMedicine * item.medicineId.SGST) / 100).toFixed(2));
@@ -1369,6 +1378,8 @@ exports.generateBill = async (req, res) => {
                 amount: amount.toFixed(2)
             });
         });
+        subTotal += bill.deliveryCharge
+        console.log(subTotal, " subTotal")
         let amountInWords = generateAmountInWords(subTotal)
         console.log("amountInWords", amountInWords)
         const templatePath = path.join(__dirname, '../views/billTemplate.ejs');
