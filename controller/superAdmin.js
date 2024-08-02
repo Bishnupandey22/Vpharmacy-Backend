@@ -467,7 +467,6 @@ exports.createAndUpdateInventory = async (req, res) => {
                 message: "totalquantityOfMedicineinAPack or mrp or rate not provided"
             })
         }
-        console.log(strip, rate, totalQuantity)
         let calculatedStripCount = totalQuantity / strip
         let totalMrp = mrp * strip
         let mrpPerMedicine = parseFloat(totalMrp / totalQuantity).toFixed(2)
@@ -483,7 +482,6 @@ exports.createAndUpdateInventory = async (req, res) => {
         // } else {
         //     calculatedNetRate = parseFloat(rate.toFixed(2));
         // }
-        console.log(calculatedNetRate, "calculatedNetRate")
 
         // Total Purchased Cost
         let calculatedTotalPurchasedCost = calculatedNetRate * strip
@@ -505,6 +503,8 @@ exports.createAndUpdateInventory = async (req, res) => {
         let calculatedCostPerMedicine = parseFloat(calculatedTotalPurchasedCost / totalQuantity).toFixed(2)
 
         let calculatedTotalMedicineInStoke = totalQuantity
+        console.log(totalQuantity, "totalQuantity")
+        console.log(calculatedTotalMedicineInStoke, "calculatedTotalMedicineInStoke")
         if (id) {
             const isExists = await inventoryModel.findOne({ _id: id })
             if (!isExists) {
@@ -725,27 +725,82 @@ exports.createAndUpdateBiling = async (req, res) => {
 
 
         // // check if all medicine exists
+        // for (const med of medicines) {
+        //     const medicine = await inventoryModel.findById(med.medicineId)
+        //     if (!medicine) {
+        //         return res.status(404).send({
+        //             message: "Medicine not found"
+        //         })
+        //     }
+        //     let previousDeductedQuantity = medicine.previousDeductedQuantity || 0;
+        //     let quantityToDeduct = Math.max(0, med.quantity - previousDeductedQuantity);
+
+        //     if (quantityToDeduct === 0) {
+        //         console.log(`Medicine with ID ${med.medicineId} already has sufficient quantity. No update needed.`);
+        //         continue;
+        //     }
+
+        //     let medicineStoke = medicine.totalMedicineInStoke - quantityToDeduct;
+        //     console.log("medicineStoke", medicineStoke);
+
+        //     // let medicineStoke = medicine.totalMedicineInStoke - med.quantity
+        //     console.log("medicineStoke", medicineStoke)
+
+        //     let updatedMed = await inventoryModel.findOneAndUpdate(
+        //         { _id: med.medicineId },
+        //         {
+        //             $set: {
+        //                 totalMedicineInStoke: medicineStoke,
+        //                 previousDeductedQuantity: med.quantity
+        //             }
+        //         },
+        //         { new: true }
+        //     );
+
+        //     if (!updatedMed) {
+        //         return res.status(400).send({
+        //             message: "Error while updating the medicine stock"
+        //         });
+        //     }
+
+        //     // await medicine.save();
+        // }
+
         for (const med of medicines) {
-            const medicine = await inventoryModel.findById(med.medicineId)
+            const medicine = await inventoryModel.findById(med.medicineId);
             if (!medicine) {
                 return res.status(404).send({
                     message: "Medicine not found"
-                })
+                });
             }
-            // const quantityReduction = Math.max(0, med.quantity - medicine.totalMedicineInStoke);
-            // if (quantityReduction === 0) {
-            //     console.log(`Medicine with ID ${med.medicineId} already has sufficient quantity. No update needed.`);
-            //     continue; // Skip to the next iteration if no reduction is required
-            // }
-            // const medicineStoke = medicine.totalMedicineInStoke - quantityReduction;
-            // console.log("medicineStoke", medicineStoke);
 
-            let medicineStoke = medicine.totalMedicineInStoke - med.quantity
-            console.log("medicineStoke", medicineStoke)
+            let previousDeductedQuantity = medicine.previousDeductedQuantity || 0;
+            let quantityDifference = med.quantity - previousDeductedQuantity;
+            let medicineStoke;
+
+            if (quantityDifference > 0) {
+                // If the new quantity is greater, subtract the difference from the stock
+                medicineStoke = medicine.totalMedicineInStoke - quantityDifference;
+                console.log(`Deducting ${quantityDifference} from stock of medicine with ID ${med.medicineId}.`);
+            } else if (quantityDifference < 0) {
+                // If the new quantity is less, add the difference back to the stock
+                medicineStoke = medicine.totalMedicineInStoke - quantityDifference; // Adding negative quantityDifference
+                console.log(`Adding ${Math.abs(quantityDifference)} back to stock of medicine with ID ${med.medicineId}.`);
+            } else {
+                console.log(`Medicine with ID ${med.medicineId} already has sufficient quantity. No update needed.`);
+                continue; // Skip to the next iteration if no change is required
+            }
+
+            console.log("medicineStoke", medicineStoke);
 
             let updatedMed = await inventoryModel.findOneAndUpdate(
                 { _id: med.medicineId },
-                { $set: { totalMedicineInStoke: medicineStoke } },
+                {
+                    $set: {
+                        totalMedicineInStoke: medicineStoke,
+                        previousDeductedQuantity: med.quantity
+                    }
+                },
                 { new: true }
             );
 
@@ -754,12 +809,9 @@ exports.createAndUpdateBiling = async (req, res) => {
                     message: "Error while updating the medicine stock"
                 });
             }
-
-            // await medicine.save();
         }
 
-        const year = new Date().getFullYear().toString().slice(-2);
-        const invoiceNumber = `VP/${year}/${await getNextSequenceValue('counter')}`;
+
 
         const deliveryBoyExists = await userModel.findById(deliveryBoyId)
         if (!deliveryBoyExists) {
@@ -807,7 +859,7 @@ exports.createAndUpdateBiling = async (req, res) => {
                         phoneNumber: phoneNumber,
                         prescribedBy: prescribedBy,
                         village: village,
-                        invoiceNumber: invoiceNumber,
+                        // invoiceNumber: invoiceNumber,
                         remark: remark,
                         invoiceType: invoiceType,
                         date: date,
@@ -831,6 +883,8 @@ exports.createAndUpdateBiling = async (req, res) => {
 
             })
         } else {
+            const year = new Date().getFullYear().toString().slice(-2);
+            const invoiceNumber = `VP/${year}/${await getNextSequenceValue('counter')}`;
             const createBilling = await Billing.create({
                 patientId: patientId,
                 medicines: medicines,

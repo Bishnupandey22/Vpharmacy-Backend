@@ -5,7 +5,7 @@ const inventoryModel = new mongoose.Schema({
     composition: { type: String, default: null },
     type: { type: String, },//tab,caps,syr,inj
     totalQuantity: { type: Number },
-
+    previousDeductedQuantity: { type: Number, default: 0 },
     totalMedicineInStoke: { type: Number },
     totalPurchasedCost: { type: Number },
     strip: { type: Number },
