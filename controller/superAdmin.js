@@ -724,93 +724,6 @@ exports.createAndUpdateBiling = async (req, res) => {
         // }
 
 
-        // // check if all medicine exists
-        // for (const med of medicines) {
-        //     const medicine = await inventoryModel.findById(med.medicineId)
-        //     if (!medicine) {
-        //         return res.status(404).send({
-        //             message: "Medicine not found"
-        //         })
-        //     }
-        //     let previousDeductedQuantity = medicine.previousDeductedQuantity || 0;
-        //     let quantityToDeduct = Math.max(0, med.quantity - previousDeductedQuantity);
-
-        //     if (quantityToDeduct === 0) {
-        //         console.log(`Medicine with ID ${med.medicineId} already has sufficient quantity. No update needed.`);
-        //         continue;
-        //     }
-
-        //     let medicineStoke = medicine.totalMedicineInStoke - quantityToDeduct;
-        //     console.log("medicineStoke", medicineStoke);
-
-        //     // let medicineStoke = medicine.totalMedicineInStoke - med.quantity
-        //     console.log("medicineStoke", medicineStoke)
-
-        //     let updatedMed = await inventoryModel.findOneAndUpdate(
-        //         { _id: med.medicineId },
-        //         {
-        //             $set: {
-        //                 totalMedicineInStoke: medicineStoke,
-        //                 previousDeductedQuantity: med.quantity
-        //             }
-        //         },
-        //         { new: true }
-        //     );
-
-        //     if (!updatedMed) {
-        //         return res.status(400).send({
-        //             message: "Error while updating the medicine stock"
-        //         });
-        //     }
-
-        //     // await medicine.save();
-        // }
-
-        for (const med of medicines) {
-            const medicine = await inventoryModel.findById(med.medicineId);
-            if (!medicine) {
-                return res.status(404).send({
-                    message: "Medicine not found"
-                });
-            }
-
-            let previousDeductedQuantity = medicine.previousDeductedQuantity || 0;
-            let quantityDifference = med.quantity - previousDeductedQuantity;
-            let medicineStoke;
-
-            if (quantityDifference > 0) {
-                // If the new quantity is greater, subtract the difference from the stock
-                medicineStoke = medicine.totalMedicineInStoke - quantityDifference;
-                console.log(`Deducting ${quantityDifference} from stock of medicine with ID ${med.medicineId}.`);
-            } else if (quantityDifference < 0) {
-                // If the new quantity is less, add the difference back to the stock
-                medicineStoke = medicine.totalMedicineInStoke - quantityDifference; // Adding negative quantityDifference
-                console.log(`Adding ${Math.abs(quantityDifference)} back to stock of medicine with ID ${med.medicineId}.`);
-            } else {
-                console.log(`Medicine with ID ${med.medicineId} already has sufficient quantity. No update needed.`);
-                continue; // Skip to the next iteration if no change is required
-            }
-
-            console.log("medicineStoke", medicineStoke);
-
-            let updatedMed = await inventoryModel.findOneAndUpdate(
-                { _id: med.medicineId },
-                {
-                    $set: {
-                        totalMedicineInStoke: medicineStoke,
-                        previousDeductedQuantity: med.quantity
-                    }
-                },
-                { new: true }
-            );
-
-            if (!updatedMed) {
-                return res.status(400).send({
-                    message: "Error while updating the medicine stock"
-                });
-            }
-        }
-
 
 
         const deliveryBoyExists = await userModel.findById(deliveryBoyId)
@@ -849,11 +762,125 @@ exports.createAndUpdateBiling = async (req, res) => {
                     message: "Biling not found"
                 })
             }
+
+            let newMed = []
+            let oldMedicine = []
+            let medicineStoke = 0
+            for (const med of medicines) {
+                const medicines = await inventoryModel.findById(med.medicineId)
+                if (!medicines) {
+                    return res.status(404).send({
+                        message: "Medicine Not Found"
+                    })
+                }
+                newMed = [...newMed, med]
+
+            }
+            for (const oldMed of isBillExists.medicines) {
+                const medicines = await inventoryModel.findById(oldMed.medicineId)
+                if (!medicines) {
+                    return res.status(404).send({
+                        message: "Medicine Not Found"
+                    })
+                }
+                oldMedicine = [...oldMedicine, oldMed]
+            }
+
+
+
+            for (const newMedItems of newMed) {
+                console.log(newMedItems, "newMedItems")
+
+                const oldMedItem = oldMedicine.find(med => med.medicineId.toString() === newMedItems.medicineId)
+                console.log(oldMedItem, "oldMedItem")
+
+
+
+                if (oldMedItem) {
+                    const medicine = await inventoryModel.findById(oldMedItem.medicineId)
+                    if (!medicine) {
+                        return res.status(404).send({
+                            message: "Medicine Not Found"
+                        })
+                    }
+                    const quantityDifference = newMedItems.quantity - oldMedItem.quantity
+                    if (quantityDifference > 0) {
+                        // If the new quantity is greater, subtract the difference from the stock
+                        medicineStoke = medicine.totalMedicineInStoke - quantityDifference
+
+                    }
+                    else if (quantityDifference < 0) {
+                        medicineStoke = medicine.totalMedicineInStoke - quantityDifference
+                    }
+                    else {
+                        continue
+                    }
+
+
+
+                    const updateInventory = await inventoryModel.findByIdAndUpdate(
+                        { _id: medicine._id },
+                        { $set: { totalMedicineInStoke: medicineStoke } },
+                        { new: true }
+                    )
+                    if (!updateInventory) {
+                        return res.status(400).send({
+                            message: "Getting Error While updating Inventory"
+                        })
+                    }
+                } else {
+                    // If oldMedItem is not found in newMed (new medicine added)
+                    const medicine = await inventoryModel.findById(newMedItems.medicineId);
+                    if (!medicine) {
+                        return res.status(404).send({
+                            message: "Medicine Not Found"
+                        });
+                    }
+                    medicine.totalMedicineInStoke -= newMedItems.quantity;
+                    await medicine.save();
+                }
+            }
+            // Handle case where oldMedItem is not in newMed (remove medicine from stock)
+            // for (const oldMedItem of oldMedicine) {
+            //     const newMedItem = newMed.find(med => med.medicineId.toString() === oldMedItem.medicineId);
+
+            //     if (!newMedItem) {
+            //         // Medicine removed from newMed, add its quantity back to stock
+            //         const medicine = await inventoryModel.findById(oldMedItem.medicineId);
+            //         if (!medicine) {
+            //             return res.status(404).send({
+            //                 message: "Medicine Not Found"
+            //             });
+            //         }
+            //         medicine.totalMedicineInStock += oldMedItem.quantity;
+            //         await medicine.save();
+            //     }
+            // }
+            for (const oldMedItem of oldMedicine) {
+                const newMedItem = newMed.find(med => med.medicineId.toString() === oldMedItem.medicineId.toString());
+                console.log(oldMedItem, "oldMedItem")
+                console.log(newMedItem, "newMedItem")
+                console.log(newMed, "newMed")
+                if (!newMedItem) {
+                    // Medicine removed from newMed, add its quantity back to stock
+                    const medicine = await inventoryModel.findById(oldMedItem.medicineId);
+                    if (!medicine) {
+                        return res.status(404).send({
+                            message: "Medicine Not Found"
+                        });
+                    }
+                    console.log(medicine.totalMedicineInStoke, " medicine.totalMedicineInStock")
+                    console.log(oldMedItem.quantity, " oldMedItem.quantity")
+                    medicine.totalMedicineInStoke += oldMedItem.quantity; // Add old quantity back to stock
+                    await medicine.save();
+                }
+            }
             const updateBiling = await Billing.findByIdAndUpdate(
                 { _id: id },
                 {
                     $set:
                     {
+                        patientId: patientId,
                         medicines: medicines,
                         address: address,
                         phoneNumber: phoneNumber,
@@ -885,6 +912,28 @@ exports.createAndUpdateBiling = async (req, res) => {
         } else {
             const year = new Date().getFullYear().toString().slice(-2);
             const invoiceNumber = `VP/${year}/${await getNextSequenceValue('counter')}`;
+            for (const med of medicines) {
+                const medicine = await inventoryModel.findById(med.medicineId)
+                if (!medicine) {
+                    return res.status(404).send({
+                        message: "Medicine Not Found"
+                    })
+                }
+                console.log(medicine.totalMedicineInStoke, "med.totalMedicineInStock")
+                console.log(med.quantity, "medicines.quantity")
+                let medicineStoke = medicine.totalMedicineInStoke - med.quantity
+                console.log(medicineStoke)
+                const updateMedicine = await inventoryModel.findOneAndUpdate(
+                    { _id: med.medicineId },
+                    { $set: { totalMedicineInStoke: medicineStoke } },
+                    { new: true }
+                )
+                if (!updateMedicine) {
+                    return res.status(400).send({
+                        message: "Getting Error During Updating the stock"
+                    })
+                }
+            }
             const createBilling = await Billing.create({
                 patientId: patientId,
                 medicines: medicines,
@@ -916,7 +965,6 @@ exports.createAndUpdateBiling = async (req, res) => {
                     message: "Getting Error While creating biling"
                 })
             }
-            console.log(io, "io")
 
             io.to(deliveryBoyId).emit("sendNotification", dataObject, (error) => {
                 if (error) {
@@ -986,6 +1034,30 @@ exports.cancelBill = async (req, res) => {
     } catch (error) {
         return res.status(500).send({
             message: "Internal Server Error "
+        })
+    }
+}
+
+// remove medicine
+exports.removeMedicine = async (req, res) => {
+    try {
+        const { medicineId, quantity } = req.body
+        const isExists = await inventoryModel.findById(medicineId)
+
+        const updateInventory = await inventoryModel.findOneAndUpdate({
+            _id: medicineId,
+
+        })
+        if (!isExists) {
+            return res.status(404).send({
+                message: "Medicine Not Found"
+            })
+        }
+
+
+    } catch (error) {
+        return res.status(500).send({
+            message: "Internal Server Error"
         })
     }
 }
