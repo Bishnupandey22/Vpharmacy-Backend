@@ -100,8 +100,10 @@ exports.createSuperAdmin = async (req, res) => {
 }
 
 exports.signIn = async (req, res) => {
+    console.log("hitted")
     try {
         const { email, password, rememberMe } = req.body;
+
         const isUserExists = await userModel.findOne({ email: email }).populate("role")
 
         if (isUserExists) {

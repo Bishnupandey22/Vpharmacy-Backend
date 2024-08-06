@@ -11,6 +11,7 @@ connectDb(DATABASE_URL)
 const path = require('path');
 const superAdminRoutes = require("./routes/superAdmin")
 const notificationRoute = require("./routes/Notification")
+const userRoute = require("./routes/user")
 const passport = require('passport');
 const notificationModel = require("./model/notification/Notification")
 const pincodeAndVillageRoute = require("./routes/VillageAndPincode")
@@ -41,7 +42,7 @@ app.use(express.static('public'))
 app.use("/api/superAdmin", superAdminRoutes.router)
 app.use("/api/notification", notificationRoute.router)
 app.use("/api/pincodeAndVillage", pincodeAndVillageRoute.router)
-
+app.use("/api/user", userRoute.router)
 
 const roles = [
     { id: 1, name: "super admin" },
