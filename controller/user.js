@@ -3,7 +3,8 @@ require("dotenv").config()
 const PRIVATEKEY = process.env.PRIVATEKEY;
 const bcrypt = require("bcrypt")
 const userModel = require("../model/users")
-const role = require("../model/role/role")
+const role = require("../model/role/role");
+const prescriptionModel = require("../model/prescription/Prescription");
 
 exports.signIn = async (req, res) => {
     try {
@@ -69,6 +70,57 @@ exports.signUp = async (req, res) => {
             message: "Sucessfully Signup"
         })
     } catch (error) {
+        return res.status(500).send({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+exports.uploadPrescription = async (req, res) => {
+    try {
+        console.log("hitting")
+        const { userId, patientName } = req.body
+
+        console.log(req.body, "Req")
+        console.log(req.file, "Req")
+        const user = userModel.findById(userId)
+        if (!user) {
+            return res.status(404).send({
+                message: "User Not Found"
+            })
+        }
+
+
+        let prescriptionObject = {
+            userId: userId,
+            patientName: patientName
+        }
+        if (req.file && req.file.filename) {
+            console.log("contain file")
+            prescriptionObject = {
+                ...prescriptionObject,
+                prescription: req.file.filename
+            }
+        }
+        if (req.body.removeProfileImage == "true") {
+            console.log("remove file")
+            prescriptionObject = {
+                prescription: null,
+                ...prescriptionObject
+            };
+        }
+        console.log("prescriptionObject", prescriptionObject)
+        const createPrescription = await prescriptionModel.create(prescriptionObject)
+        if (!createPrescription) {
+            return res.status(400).send({
+                message: "Getting Error During Uploading Prescription"
+            })
+        }
+        return res.status(200).send({
+            message: "Sucessfuly Uploaded Prescription"
+        })
+    } catch (error) {
+        console.log(error, "error")
         return res.status(500).send({
             message: "Internal Server Error"
         })

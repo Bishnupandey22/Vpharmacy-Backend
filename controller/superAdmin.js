@@ -1542,4 +1542,11 @@ exports.generateBill = async (req, res) => {
     }
 };
 
+// prescription upload
+exports.getUplodedPrescription = async (req, res) => {
+    try {
+        const searchText = req.query.keyword ? req.query.keyword.trim('') : ""
+    } catch (error) {
 
+    }
+}

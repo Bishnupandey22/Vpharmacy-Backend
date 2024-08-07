@@ -12,6 +12,9 @@ if (!fs.existsSync("./public")) {
 if (!fs.existsSync("./public/profile")) {
     fs.mkdirSync("./public/profile")
 }
+if (!fs.existsSync('./public/prescription')) {
+    fs.mkdirSync("./public/prescription")
+}
 
 
 // image filter
@@ -33,6 +36,17 @@ const profileStorage = multer.diskStorage({
     }
 });
 
+// upload prescription
+const prescriptionStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './public/prescription')
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}_${file.originalname.toLowerCase().replaceAll(' ', '')}`)
+
+    }
+})
+
 const uploadProfile = multer({
     storage: profileStorage,
     limits: {
@@ -42,4 +56,13 @@ const uploadProfile = multer({
     fileFilter: imageFilter
 })
 
+const uploadPrescription = multer({
+    storage: prescriptionStorage,
+    limits: {
+        fileSize: 1024 * 1024, // 1 MB
+        files: 1
+    },
+    fileFilter: imageFilter
+});
 exports.uploadProfile = uploadProfile
+exports.uploadPrescription = uploadPrescription
