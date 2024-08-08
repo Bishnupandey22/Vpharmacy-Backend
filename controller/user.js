@@ -126,3 +126,54 @@ exports.uploadPrescription = async (req, res) => {
         })
     }
 }
+// View Prescription
+exports.viewPrescription = async (req, res) => {
+    try {
+        const { id } = req.params
+        const prescription = await prescriptionModel.findById(id)
+        if (!prescription) {
+            return res.status(404).send({
+                message: "Prescription Not Found"
+            })
+        }
+
+        return res.status(200).send({
+            message: "Sucessfully Found Prescription",
+            prescription: prescription
+
+        })
+    } catch (error) {
+        console.log(error, "Error")
+        return res.status(500).send({
+            message: "Internal Server Error "
+        })
+    }
+}
+// Get All Prescription
+exports.getAllPrescription = async (req, res) => {
+    try {
+        console.log("hitting")
+        const { userId } = req.params
+        const user = await userModel.findById(userId)
+        const prescription = await prescriptionModel.find({ userId: userId })
+        if (!user) {
+            return res.status(404).send({
+                message: "User Not Found"
+            })
+        }
+        if (!prescription) {
+            return res.status(400).send({
+                message: "Getting Error in finding Orders"
+            })
+        }
+        return res.status(200).send({
+            message: 'Sucessfully find All Orders',
+            orders: prescription
+        })
+    } catch (error) {
+        console.log(error, "error")
+        return res.status(500).send({
+            message: 'Internal Server Error'
+        })
+    }
+}

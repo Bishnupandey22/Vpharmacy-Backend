@@ -90,8 +90,15 @@ router.get("/getListOfBillingWithPagination")
 // generate bill
 router.post("/generateBill", superAdminController.generateBill)
 
+// Uploded prescriptoin with Pagination
+router.get("/getUplodedPrescriptionWithPagination", superAdminController.getUplodedPrescription)
 
+// update Prescription Status
+router.patch("/updatePrescriptionStatus/:id", superAdminController.updateStatus)
 
+// View Prescription
+router.get("/getPrescription/:id", superAdminController.viewPrescription)
 
-
+// download prescription 
+router.get("/downloadPrescription/:id", superAdminController.downloadPrescription)
 exports.router = router

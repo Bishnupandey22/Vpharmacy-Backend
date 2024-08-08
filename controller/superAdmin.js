@@ -17,7 +17,8 @@ const notificationModel = require("../model/notification/Notification")
 const { formatCustomDate } = require("../common/emailSend")
 // generate invoice number
 // const socketInstance = require("../app")
-const { io } = require("../utils/socket")
+const { io } = require("../utils/socket");
+const prescriptionModel = require("../model/prescription/Prescription");
 
 
 async function getNextSequenceValue(sequenceName) {
@@ -1542,11 +1543,164 @@ exports.generateBill = async (req, res) => {
     }
 };
 
-// prescription upload
+// prescription upload with pagination
+
 exports.getUplodedPrescription = async (req, res) => {
     try {
-        const searchText = req.query.keyword ? req.query.keyword.trim('') : ""
-    } catch (error) {
+        const searchText = req.query.keyword ? req.query.keyword.trim() : ''
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.perPage) || 10
+        const skip = (page - 1) * limit
 
+        let whereCondition = {}
+        if (searchText) {
+            whereCondition.$or = [
+                { 'user.firstname': { $regex: searchText, $options: "i" } },
+                { 'user.lastname': { $regex: searchText, $options: "i" } },
+                { 'user.village': { $regex: searchText, $options: "i" } },
+                { 'user.pincode': { $regex: searchText, $options: "i" } },
+                { patientName: { $regex: searchText, $options: "i" } },
+            ]
+        }
+        if (!searchText) {
+            delete whereCondition.$or
+        }
+        const [uplodedPrescription, count] = await Promise.all([
+            prescriptionModel.find(whereCondition).skip(skip).limit(limit).sort({ _id: "desc" }).populate("userId"),
+            prescriptionModel.countDocuments(whereCondition)
+        ]);
+        return res.status(200).send({
+            message: "Prescription Found Sucessfully.....",
+            count: count,
+            prescription: uplodedPrescription
+        })
+    } catch (error) {
+        return res.status(500).send({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+// Update Status
+exports.updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { status, statusCode } = req.body
+        const updateStatus = await prescriptionModel.findOneAndUpdate(
+            { _id: id },
+            { $set: { status: status, statusCode: statusCode } },
+            { new: true }
+
+        )
+        if (!updateStatus) {
+            return res.status(404).send({
+                message: "Prescription Not Found"
+            })
+        }
+        return res.status(200).send({
+            message: "Status Updated Sucessfully"
+        })
+    } catch (error) {
+        return res.status(500).send({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+// Download Prescription 
+exports.downloadPrescription = async (req, res) => {
+    try {
+        const { id } = req.params
+        const prescription = await prescriptionModel.findById(id)
+        if (!prescription) {
+            return res.status(404).send({
+                message: "Prescription Not Found"
+            })
+        }
+        // console.log(__dirname, "direname")
+        // console.log(prescription.prescription, "prscription")
+        // const filePath = path.join(__dirname, '../public/prescription', prescription.prescription)
+        // res.setHeader('Content-Type', 'application/pdf');
+        // res.download(filePath, (err) => {
+        //     if (err) {
+        //         console.log("Error in Download", err)
+        //         res.status(500).send({ message: "Getting Error in downloading prescription" })
+        //     }
+        // })
+        // const html = `
+        //     <html>
+        //     <head>
+        //         <style>
+        //             body { font-family: Arial, sans-serif; }
+        //             .container { padding: 20px; }
+        //             .header { text-align: center; margin-bottom: 20px; }
+        //             .content { margin-bottom: 20px; }
+        //         </style>
+        //     </head>
+        //     <body>
+        //         <div class="container">
+        //             <div class="header">
+        //                 <h1>Prescription</h1>
+        //             </div>
+        //             <div class="content">
+        //                 <p><strong>Patient Name:</strong> ${prescription.patientName}</p>
+        //                 <p><strong>Prescription:</strong> ${prescription.prescription}</p>
+        //             </div>
+        //         </div>
+        //     </body>
+        //     </html>
+        // `;
+        const templatePath = path.join(__dirname, "../views/prescription.ejs")
+        // const html=ejs.renderFile(templatePath,{prescription.prescription})
+        // Launch Puppeteer and generate the image
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(html);
+        const screenshotBuffer = await page.screenshot({ fullPage: true });
+
+        await browser.close();
+
+        // Define the path to save the image
+        const imagePath = path.join(__dirname, '..', 'public', 'prescription', prescription.prescription);
+
+        // Ensure the directory exists
+        fs.mkdirSync(path.dirname(imagePath), { recursive: true });
+
+        // Save the image
+        fs.writeFileSync(imagePath, screenshotBuffer);
+
+        // Send a success response
+        res.status(200).send({
+            success: true,
+            message: 'Prescription image saved successfully',
+            imagePath: `/prescriptions/prescription-${id}.png`
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+// View Prescription
+exports.viewPrescription = async (req, res) => {
+    try {
+        const { id } = req.params
+        const prescription = await prescriptionModel.findById(id)
+        if (!prescription) {
+            return res.status(404).send({
+                message: "Prescription Not Found"
+            })
+        }
+
+        return res.status(200).send({
+            message: "Sucessfully Found Prescription",
+            prescription: prescription
+
+        })
+    } catch (error) {
+        console.log(error, "Error")
+        return res.status(500).send({
+            message: "Internal Server Error "
+        })
     }
 }

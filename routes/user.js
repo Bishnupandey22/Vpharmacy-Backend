@@ -26,4 +26,6 @@ router.post("/uploadPrescription", (req, res, next) => {
     });
 }, userController.uploadPrescription)
 
+router.get("/getPrescription/:id", userController.viewPrescription)
+router.get("/getAllPrescription/:userId", userController.getAllPrescription)
 exports.router = router
