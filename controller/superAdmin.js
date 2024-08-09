@@ -19,6 +19,7 @@ const { formatCustomDate } = require("../common/emailSend")
 // const socketInstance = require("../app")
 const { io } = require("../utils/socket");
 const prescriptionModel = require("../model/prescription/Prescription");
+const { uploadOnCloudinary } = require("../utils/cloudinary");
 
 
 async function getNextSequenceValue(sequenceName) {
@@ -188,12 +189,13 @@ exports.createAndUpdateUser = async (req, res) => {
                 degree: degree,
                 specilization: specilization
             }
-
+            const path = req.file.path
+            const cloudinary = await uploadOnCloudinary(path)
 
             if (req.file && req.file.filename) {
                 profileObject = {
                     ...profileObject,
-                    profileImage: req.file.filename
+                    profileImage: cloudinary.secure_url
                 }
             }
             if (req.body.removeProfileImage == "true") {
@@ -229,6 +231,10 @@ exports.createAndUpdateUser = async (req, res) => {
                 { _id: id },
                 { $set: profileObject }
             )
+            fs.unlinkSync((path), function (err) {
+                if (err) console.log(err, "deleting error")
+                else console.log("file deleted")
+            })
             if (roleId !== 1) {
                 const mailOptions = {
                     from: process.env.EMAIL_FROM,
@@ -268,6 +274,8 @@ exports.createAndUpdateUser = async (req, res) => {
                     message: "Phone Number Already Exists"
                 })
             }
+            const path = req.file.path
+            const cloudinary = await uploadOnCloudinary(path)
             let profileObject = {
                 firstName: firstName,
                 middleName: middleName,
@@ -292,7 +300,7 @@ exports.createAndUpdateUser = async (req, res) => {
             if (req.file && req.file.filename) {
                 profileObject = {
                     ...profileObject,
-                    profileImage: req.file.filename
+                    profileImage: cloudinary.secure_url
                 }
             }
             if (req.body.removeProfileImage == "true") {
@@ -317,6 +325,10 @@ exports.createAndUpdateUser = async (req, res) => {
                     message: `Getting Error While Creating ${designation}`
                 })
             }
+            fs.unlinkSync((path), function (err) {
+                if (err) console.log(err, "deleting error")
+                else console.log("file deleted")
+            })
             if (roleId !== 1) {
                 const mailOptions = {
                     from: process.env.EMAIL_FROM,
@@ -1512,6 +1524,8 @@ exports.generateBill = async (req, res) => {
         let amountInWords = generateAmountInWords(subTotal)
         console.log("amountInWords", amountInWords)
         const templatePath = path.join(__dirname, '../views/billTemplate.ejs');
+
+
         const logoUrl = '/logo/vpharmacylogo.png';
         const html = await ejs.renderFile(templatePath, { bill, logoUrl, newAmount, totalAmount, discount, subTotal, GST, amountInWords });
 
@@ -1608,6 +1622,7 @@ exports.updateStatus = async (req, res) => {
 }
 
 // Download Prescription 
+
 exports.downloadPrescription = async (req, res) => {
     try {
         const { id } = req.params
@@ -1617,69 +1632,40 @@ exports.downloadPrescription = async (req, res) => {
                 message: "Prescription Not Found"
             })
         }
-        // console.log(__dirname, "direname")
-        // console.log(prescription.prescription, "prscription")
-        // const filePath = path.join(__dirname, '../public/prescription', prescription.prescription)
-        // res.setHeader('Content-Type', 'application/pdf');
-        // res.download(filePath, (err) => {
-        //     if (err) {
-        //         console.log("Error in Download", err)
-        //         res.status(500).send({ message: "Getting Error in downloading prescription" })
-        //     }
-        // })
-        // const html = `
-        //     <html>
-        //     <head>
-        //         <style>
-        //             body { font-family: Arial, sans-serif; }
-        //             .container { padding: 20px; }
-        //             .header { text-align: center; margin-bottom: 20px; }
-        //             .content { margin-bottom: 20px; }
-        //         </style>
-        //     </head>
-        //     <body>
-        //         <div class="container">
-        //             <div class="header">
-        //                 <h1>Prescription</h1>
-        //             </div>
-        //             <div class="content">
-        //                 <p><strong>Patient Name:</strong> ${prescription.patientName}</p>
-        //                 <p><strong>Prescription:</strong> ${prescription.prescription}</p>
-        //             </div>
-        //         </div>
-        //     </body>
-        //     </html>
-        // `;
+        const prescriptionImg = prescription.prescription
         const templatePath = path.join(__dirname, "../views/prescription.ejs")
-        // const html=ejs.renderFile(templatePath,{prescription.prescription})
-        // Launch Puppeteer and generate the image
-        const browser = await puppeteer.launch();
+        const html = await ejs.renderFile(templatePath, { prescriptionImg })
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            timeout: 0,
+        });
         const page = await browser.newPage();
-        await page.setContent(html);
-        const screenshotBuffer = await page.screenshot({ fullPage: true });
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdf = await page.pdf({
+            format: 'A4',
+            margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+            printBackground: true
+        });
 
         await browser.close();
-
-        // Define the path to save the image
-        const imagePath = path.join(__dirname, '..', 'public', 'prescription', prescription.prescription);
-
-        // Ensure the directory exists
-        fs.mkdirSync(path.dirname(imagePath), { recursive: true });
-
-        // Save the image
-        fs.writeFileSync(imagePath, screenshotBuffer);
-
-        // Send a success response
-        res.status(200).send({
-            success: true,
-            message: 'Prescription image saved successfully',
-            imagePath: `/prescriptions/prescription-${id}.png`
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=${prescription.patientName}_prescription.pdf`,
         });
+
+        res.send(pdf);
+
+
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send({ message: 'Internal Server Error' });
+        console.log(error, "erro")
+        return res.status(500).send({
+            message: "Internal Server Error"
+        })
     }
 }
+
+
 
 // View Prescription
 exports.viewPrescription = async (req, res) => {

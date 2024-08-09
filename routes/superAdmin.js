@@ -84,8 +84,6 @@ router.get("/getListOfBilling", superAdminController.getListOfBilling)
 // sort Billing data 
 router.get("/sortBilling", superAdminController.sortBilling)
 
-// get List of billing with pagination
-router.get("/getListOfBillingWithPagination")
 
 // generate bill
 router.post("/generateBill", superAdminController.generateBill)

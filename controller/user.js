@@ -5,7 +5,8 @@ const bcrypt = require("bcrypt")
 const userModel = require("../model/users")
 const role = require("../model/role/role");
 const prescriptionModel = require("../model/prescription/Prescription");
-
+const { uploadOnCloudinary } = require("../utils/cloudinary");
+const fs = require("fs")
 exports.signIn = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -89,7 +90,8 @@ exports.uploadPrescription = async (req, res) => {
                 message: "User Not Found"
             })
         }
-
+        const path = req.file.path
+        const cloudinary = await uploadOnCloudinary(path)
 
         let prescriptionObject = {
             userId: userId,
@@ -99,7 +101,7 @@ exports.uploadPrescription = async (req, res) => {
             console.log("contain file")
             prescriptionObject = {
                 ...prescriptionObject,
-                prescription: req.file.filename
+                prescription: cloudinary.secure_url
             }
         }
         if (req.body.removeProfileImage == "true") {
@@ -109,13 +111,19 @@ exports.uploadPrescription = async (req, res) => {
                 ...prescriptionObject
             };
         }
-        console.log("prescriptionObject", prescriptionObject)
+
+        console.log("cloudinary", cloudinary)
         const createPrescription = await prescriptionModel.create(prescriptionObject)
         if (!createPrescription) {
             return res.status(400).send({
                 message: "Getting Error During Uploading Prescription"
             })
         }
+        fs.unlinkSync((path),
+            function (err) {
+                if (err) console.log(err, "deleting error")
+                else console.log("file deleted")
+            })
         return res.status(200).send({
             message: "Sucessfuly Uploaded Prescription"
         })
